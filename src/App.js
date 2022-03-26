@@ -21,15 +21,38 @@ export default function App() {
               document.getElementById('github-username-input').value !== null &&
               document.getElementById('github-username-input').value !== " "
             ) {
-                const githubUsernameInput = document.getElementById('github-username-input').value;
-                const githubUsernameResponse = fetchUser(githubUsernameInput);
+                const username = document.getElementById('github-username-input').value;
+                (async () => {
+                  const res = await fetch(`https://api.github.com/users/${username}`);
+                  const githubResponse = await res.json();
 
-                if (githubUserDataRef !== null) {
-                  setWidget(true);
-                  setGithubUserData(githubUsernameResponse);
-                } else {
-                  setWidget(false);
-                }
+                  if (githubResponse !== null) {
+                    const githubUsername = githubResponse.login;
+                    const githubProfileImage = githubResponse.avatar_url;
+                    const githubProfileURL = githubResponse.html_url;
+                    const githubFollowersCount = githubResponse.followers;
+                    const githubFollowingCount = githubResponse.following;
+                    const githubNumberOfRepositories = githubResponse.public_repos;
+                    const githubNumberOfGists = githubResponse.public_gists;
+                    const githubBio = githubResponse.bio;
+                    const githubName = githubResponse.name;
+
+                    setGithubUserData({
+                      'username': githubUsername,
+                      'profileImage': githubProfileImage,
+                      'profileURL': githubProfileURL,
+                      'followers': githubFollowersCount,
+                      'following': githubFollowingCount,
+                      'repos': githubNumberOfRepositories,
+                      'gists': githubNumberOfGists,
+                      'bio': githubBio,
+                      'name': githubName
+                    });
+                    setWidget(true);
+                  } else {
+                    setWidget(false);
+                  }
+                })();
             }
           }}
         >
@@ -43,46 +66,60 @@ export default function App() {
   )
 }
 
-function fetchUser(username) {
-  if (!username) return;
-  const githubAPI = "https://api.github.com/";
-  fetch(githubAPI + 'users/' + username)
-    .then((githubResponse) => githubResponse.json())
-    .then((githubResponse) => {
-      console.log(githubResponse);
-      const githubUsername = githubResponse.login;
-      const githubProfileImage = githubResponse.avatar_url;
-      const githubProfileURL = githubResponse.url;
-      const githubFollowersCount = githubResponse.followers;
-      const githubFollowingCount = githubResponse.following;
-      const githubNumberOfRepositories = githubResponse.public_repos;
-      const githubNumberOfGists = githubResponse.public_gists;
-      const githubBio = githubResponse.bio;
-
-      const githubWidgetData = {
-        'username': githubUsername,
-        'profileImage': githubProfileImage,
-        'profileURL': githubProfileURL,
-        'followers': githubFollowersCount,
-        'following': githubFollowingCount,
-        'repos': githubNumberOfRepositories,
-        'gists': githubNumberOfGists,
-        'bio': githubBio
-      }
-      return githubWidgetData;
-    })
-    .catch((err) => {
-      console.log('error: ', err);
-      return null;
-    })
-}
-
 function GitHubWidget({widgetData, cardState}) {
   if (cardState) {
     return (
       <React.Fragment>
-        <div className="active-card p-4 border-1 border-slate-500 rounded-md w-52 h-36">
-          <h3 className="github-username">@username</h3>
+        <div className="active-card p-4 border border-slate-200 rounded-md w-fit h-auto">
+          <div className="profile-card-widget__header-layer flex flex-row items-center gap-3">
+            <img src={widgetData.profileImage} alt={`profile-${widgetData.username}`} 
+              className="w-24 h-auto rounded-full"
+            />
+            <div className="user-profile-account-details">
+              <h1 className="font-semibold text-lg text-slate-700">{widgetData.name}</h1>
+              <h3 className="github-username text-slate-400">@{widgetData.username}</h3>
+              <p className="text-gray-500 text-sm font-semibold w-[42ch]">{widgetData.bio}</p>
+            </div>
+          </div>
+          <div className="profile-card-widget__content-body mt-2 grid grid-cols-3 items-center justify-start gap-2">
+            <div className="p-4 h-fit rounded-xl border border-transparent shadow-xl">
+              <p className="mt-2 year-tag px-2 py-0.5 rounded-full bg-pink-600 w-fit text-xs font-semibold text-white">
+                Followers
+              </p>
+              <h3 className="leading-snug font-semibold uppercase text-slate-700 pt-2 pr-4">
+                {widgetData.followers}
+              </h3>
+            </div>
+            <div className="p-4 h-fit rounded-xl border border-transparent shadow-xl">
+              <p className="mt-2 year-tag px-2 py-0.5 rounded-full bg-pink-600 w-fit text-xs font-semibold text-white">
+                Following
+              </p>
+              <h3 className="leading-snug font-semibold uppercase text-slate-700 pt-2 pr-4">
+                {widgetData.following}
+              </h3>
+            </div>
+            <div className="p-4 h-fit rounded-xl border border-transparent shadow-xl">
+              <p className="mt-2 year-tag px-2 py-0.5 rounded-full bg-pink-600 w-fit text-xs font-semibold text-white">
+                Total Public Repositories
+              </p>
+              <h3 className="leading-snug font-semibold uppercase text-slate-700 pt-2 pr-4">
+                {widgetData.repos}
+              </h3>
+            </div>
+            <div className="p-4 h-fit rounded-xl border border-transparent shadow-xl">
+              <p className="mt-2 year-tag px-2 py-0.5 rounded-full bg-pink-600 w-fit text-xs font-semibold text-white">
+                Public Gists
+              </p>
+              <h3 className="leading-snug font-semibold uppercase text-slate-700 pt-2 pr-4">
+                {widgetData.gists}
+              </h3>
+            </div>
+          </div>
+          <a href={widgetData.profileURL ? widgetData.profileURL : 'https://www.github.com'} target="_blank" rel="github-widget-generator"
+            className="mt-3 block px-4 py-1 bg-indigo-600 text-white border border-indigo-600 rounded-md hover:bg-indigo-700"
+          >
+            Visit Profile
+          </a>
         </div>
       </React.Fragment>
     )
